@@ -3,15 +3,15 @@
   "version": "0.0.10",
   "description": "markdown preview plugin for (neo)vim",
   "bin": "./app/server.js",
-  "repository": "https://github.com/iamcco/markdown-preview.nvim.git",
-  "author": "年糕小豆汤 <ooiss@qq.com>",
+  "repository": "https://github.com/agmalpartida/markdown-preview.nvim.git",
+  "author": "agmalpartida",
   "license": "MIT",
   "private": true,
   "scripts": {
     "watch": "tsc -w -p ./",
-    "build-app": "cd app && rm -rf ./.next && next build && next export",
+    "build-app": "cd app && rm -rf ./.next ./out && next build",
     "build-lib": "tsc -p ./",
-    "build": "tsc -p ./ && cd app && rm -rf ./.next && next build && next export && yarn && pkg --targets node16-linux-x64,node16-macos-x64,node16-win-x64 --out-path ./bin . && rm -rf ./node_modules ./.next"
+    "build": "tsc -p ./ && cd app && rm -rf ./.next ./out && next build && yarn && pkg --targets node16-linux-x64,node16-macos-x64,node16-win-x64 --out-path ./bin . && rm -rf ./node_modules ./.next"
   },
   "dependencies": {
     "@chemzqm/neovim": "^5.7.9",
@@ -27,11 +27,10 @@
     "markdown-it-toc-done-right": "^4.0.1",
     "md-it-meta": "^0.0.2",
     "msgpack-lite": "^0.1.26",
-    "next": "^7.0.2",
-    "next-routes": "^1.4.2",
+    "next": "14",
     "plantuml-encoder": "^1.4.0",
-    "react": "^16.5.2",
-    "react-dom": "^16.5.2",
+    "react": "18",
+    "react-dom": "18",
     "socket.io": "^2.1.1",
     "socket.io-client": "^2.1.1"
   },

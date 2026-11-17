@@ -96,17 +96,12 @@ export default {
     }
   },
   top: function ({
-    cursor,
-    winline,
+    // Force absolute top; avoid jumping due to cursor/winline on first load
+    // cursor,
+    // winline,
     // winheight,
-    len
+    // len
   }) {
-    let line = cursor - 1
-    if (line === 0 || line === len - 1) {
-      topOrBottom(line, len)
-    } else {
-      line = cursor - winline
-      relativeScroll(line, 0, len)
-    }
+    scroll(0)
   }
 }

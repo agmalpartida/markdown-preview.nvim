@@ -81,6 +81,7 @@ export default class PreviewPage extends React.Component {
     this.preContent = ''
     this.timer = undefined
     this.bufnr = -1;
+    this.didInitialScroll = false;
 
     this.state = {
       name: '',
@@ -90,7 +91,8 @@ export default class PreviewPage extends React.Component {
       theme: '',
       themeModeIsVisible: false,
       contentEditable: false,
-      disableFilename: 1
+      disableFilename: 1,
+      tocHtml: ''
     }
     this.showThemeButton = this.showThemeButton.bind(this)
     this.hideThemeButton = this.hideThemeButton.bind(this)
@@ -109,6 +111,32 @@ export default class PreviewPage extends React.Component {
 
   hideThemeButton() {
     this.setState({ themeModeIsVisible: false })
+  }
+  
+  buildTocFromMarkdown(mdText) {
+    try {
+      const tokens = this.md.parse(mdText, {})
+      const slug = (s) => encodeURI(String(s || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w\- ]+/g, '')
+        .replace(/\s+/g, '-'))
+      const items = []
+      for (let i = 0; i < tokens.length; i++) {
+        const t = tokens[i]
+        if (t.type === 'heading_open') {
+          const level = Number(t.tag.slice(1))
+          const inline = tokens[i + 1] || { content: '' }
+          const text = inline.content || ''
+          const id = slug(text)
+          items.push(`<li class="toc-l${level}"><a href="#${id}">${text}</a></li>`)
+        }
+      }
+      return items.length ? `<ul>${items.join('')}</ul>` : ''
+    } catch (_) {
+      return ''
+    }
   }
 
   startSocket(bufnr) {
@@ -149,6 +177,15 @@ export default class PreviewPage extends React.Component {
 
   componentDidMount() {
     this.startSocket(parseFloat(window.location.pathname.split('/')[2]))
+    // Build TOC initially (in case content is already present)
+    setTimeout(() => this.generateTOC && this.generateTOC(), 0)
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.content !== this.state.content) {
+      // Rebuild TOC after markdown re-render
+      setTimeout(() => this.generateTOC && this.generateTOC(), 0)
+    }
   }
 
   onConnect() {
@@ -226,6 +263,12 @@ export default class PreviewPage extends React.Component {
         .use(flowchart, flowchartDiagrams)
         .use(dot)
         .use(markdownItAnchor, {
+          slugify: (s) => encodeURI(String(s)
+            .trim()
+            .toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^\w\- ]+/g, '')
+            .replace(/\s+/g, '-')),
           permalink: true,
           permalinkBefore: true,
           permalinkSymbol: anchorSymbol,
@@ -256,8 +299,13 @@ export default class PreviewPage extends React.Component {
     this.preContent = newContent
 
     const refreshScroll = () => {
+      if (!this.didInitialScroll) {
+        try { window.scrollTo(0, 0) } catch (e) {}
+        this.didInitialScroll = true
+        return
+      }
       if (isActive && !options.disable_sync_scroll) {
-        scrollToLine[options.sync_scroll_type || 'middle']({
+        scrollToLine[options.sync_scroll_type || 'top']({
           cursor: cursor[1],
           winline,
           winheight,
@@ -273,11 +321,10 @@ export default class PreviewPage extends React.Component {
           let tokens = name.split(/\\|\//).pop().split('.');
           return tokens.length > 1 ? tokens.slice(0, -1).join('.') : tokens[0];
         })(name),
-        ...(
-          refreshContent
-          ? { content: this.md.render(newContent) }
-          : {}
-        ),
+        ...(refreshContent ? {
+          content: this.md.render(newContent),
+          tocHtml: this.buildTocFromMarkdown(newContent)
+        } : {}),
         pageTitle,
         theme,
         contentEditable: options.content_editable,
@@ -387,6 +434,9 @@ export default class PreviewPage extends React.Component {
                )}
               </header>
             }
+            <aside id="toc-sidebar">
+              <nav id="toc" aria-label="Table of contents" dangerouslySetInnerHTML={{ __html: this.state.tocHtml }} />
+            </aside>
             <section
               className="markdown-body"
               dangerouslySetInnerHTML={{

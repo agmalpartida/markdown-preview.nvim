@@ -6,7 +6,7 @@ Session.vim
 /doc/tags
 *.pyc
 
-# create by https://github.com/iamcco/gitignore.vim
+# create by https://github.com/agmalpartida/gitignore.vim
 # gitignore templates from https://github.com/dvcs/gitignore
 
 ### Node.gitignore ###

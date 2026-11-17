@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "description": "markdown preview plugin for (neo)vim",
   "bin": "./index.js",
-  "repository": "https://github.com/iamcco/markdown-preview.nvim.git",
-  "author": "年糕小豆汤 <ooiss@qq.com>",
+  "repository": "https://github.com/agmalpartida/markdown-preview.nvim.git",
+  "author": "agmalpartida",
   "license": "MIT",
   "private": true,
   "dependencies": {

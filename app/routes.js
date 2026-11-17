@@ -11,7 +11,15 @@ const use = function (route) {
 // /page/:number
 use((req, res, next) => {
   if (/\/page\/\d+/.test(req.asPath)) {
-    return fs.createReadStream('./out/index.html').pipe(res)
+    try {
+      const html = fs.readFileSync('./out/index.html', 'utf8')
+      const injected = html.replace('</head>', '<script src="/_static/toc.js" defer></script></head>')
+      res.setHeader('content-type', 'text/html; charset=utf-8')
+      res.end(injected)
+      return
+    } catch (e) {
+      return fs.createReadStream('./out/index.html').pipe(res)
+    }
   }
   next()
 })
@@ -19,7 +27,18 @@ use((req, res, next) => {
 // /_next/path
 use((req, res, next) => {
   if (/\/_next/.test(req.asPath)) {
-    return fs.createReadStream(path.join('./out', req.asPath)).pipe(res)
+    const fpath = path.join('./out', req.asPath)
+    if (fs.existsSync(fpath)) {
+      const ext = path.extname(fpath).toLowerCase()
+      const types = {
+        '.js': 'application/javascript',
+        '.mjs': 'application/javascript',
+        '.css': 'text/css',
+        '.map': 'application/json'
+      }
+      if (types[ext]) res.setHeader('content-type', types[ext])
+      return fs.createReadStream(fpath).pipe(res)
+    }
   }
   next()
 })
@@ -48,6 +67,23 @@ use((req, res, next) => {
   if (/\/_static/.test(req.asPath)) {
     const fpath = path.join('./', req.asPath)
     if (fs.existsSync(fpath)) {
+      const ext = path.extname(fpath).toLowerCase()
+      const types = {
+        '.js': 'application/javascript',
+        '.mjs': 'application/javascript',
+        '.css': 'text/css',
+        '.svg': 'image/svg+xml',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.ico': 'image/x-icon',
+        '.woff2': 'font/woff2',
+        '.woff': 'font/woff',
+        '.ttf': 'font/ttf',
+        '.map': 'application/json'
+      }
+      if (types[ext]) res.setHeader('content-type', types[ext])
       return fs.createReadStream(fpath).pipe(res)
     } else {
       logger.error('No such file:', req.asPath, req.mkcss, req.hicss)
